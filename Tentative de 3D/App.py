@@ -25,6 +25,7 @@ WORLD_MAP = [
     "##########",
 ]
 
+monsters = []
 
 def wall(x, y):
     if x < 0 or y < 0:
@@ -33,23 +34,23 @@ def wall(x, y):
         return True
     return WORLD_MAP[int(y)][int(x)] == "#"
 
+class Monster:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+    
+    # Verifie si le monstre est au cordonne approximative
+    def isThere(self,x,y):
+        #return self.x+0.001 > x and self.x-0.001 < x and self.y+0.001 > y and self.y-0.001 < y
+        return int(x) == self.x and int(y) == self.y
 
-class App:
+class Player:
     def __init__(self):
-        pyxel.init(W, H, title="Test 3D")
-
-        pyxel.mouse(False)
-        pyxel.load("res.pyxres")
-        
         self.x = 3.5
         self.y = 3.5
         self.angle = 0
 
-        pyxel.run(self.update, self.draw)
-
-
     def update(self):
-
         if pyxel.btn(pyxel.KEY_LEFT):
             self.angle -= ROT_SPEED
         elif pyxel.btn(pyxel.KEY_RIGHT):
@@ -83,10 +84,28 @@ class App:
         if not wall(self.x, ny):
             self.y = ny
 
+    
+
+class App:
+    def __init__(self):
+        pyxel.init(W, H, title="Test 3D")
+
+        pyxel.mouse(False)
+        pyxel.load("res.pyxres")
+        
+        self.player = Player()
+        monsters.append(Monster(5,9))
+
+        pyxel.run(self.update, self.draw)
+
+
+    def update(self):
+        self.player.update()
+
 
     def draw_world(self):
 
-        start_angle = self.angle - HALF_FOV
+        start_angle = self.player.angle - HALF_FOV
         step = FOV / NUM_RAYS
 
         for ray in range(NUM_RAYS):
@@ -100,8 +119,13 @@ class App:
 
             while depth < MAX_DEPTH:
                 depth += 0.02
-                x = self.x + cos_a * depth
-                y = self.y + sin_a * depth
+                x = self.player.x + cos_a * depth
+                y = self.player.y + sin_a * depth
+                
+                # Detecte mais ne fait rien pour le moment
+                for monster in monsters:
+                    if monster.isThere(x,y):
+                        pass
 
                 if wall(x, y):
                     hit_x, hit_y = x, y
