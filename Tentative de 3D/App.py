@@ -41,8 +41,7 @@ class Monster:
     
     # Verifie si le monstre est au cordonne approximative
     def isThere(self,x,y):
-        #return self.x+0.001 > x and self.x-0.001 < x and self.y+0.001 > y and self.y-0.001 < y
-        return int(x) == self.x and int(y) == self.y
+        return self.x+0.01 > x and self.x-0.01 < x and self.y+0.01 > y and self.y-0.01 < y
 
 class Player:
     def __init__(self):
@@ -107,9 +106,10 @@ class App:
 
         start_angle = self.player.angle - HALF_FOV
         step = FOV / NUM_RAYS
-
+        entitie = ()
+        
         for ray in range(NUM_RAYS):
-
+            draw_type = "wall"
             ray_angle = start_angle + ray * step
             sin_a = math.sin(ray_angle)
             cos_a = math.cos(ray_angle)
@@ -121,36 +121,55 @@ class App:
                 depth += 0.02
                 x = self.player.x + cos_a * depth
                 y = self.player.y + sin_a * depth
+                found_monster = False
                 
-                # Detecte mais ne fait rien pour le moment
                 for monster in monsters:
                     if monster.isThere(x,y):
-                        pass
-
+                        found_monster = True
+                        break
+                if found_monster:
+                    hit_x, hit_y = x, y
+                    draw_type = "monster"
+                    break
+                
                 if wall(x, y):
                     hit_x, hit_y = x, y
+                    draw_type = "wall"
                     break
-
-            wall_height = min(int(100 / depth), H) # le int change les profondeurs
-
-            hit_tile_x = int(hit_x)
-            hit_tile_y = int(hit_y)
-
-            dx = hit_x - hit_tile_x
-            dy = hit_y - hit_tile_y
-
-            if abs(dx - 0.5) > abs(dy - 0.5):
-                tex_x = int((hit_y % 1) * TEX_SIZE)
-            else:
-                tex_x = int((hit_x % 1) * TEX_SIZE)
-
-            y_start = H // 2 - wall_height // 2
-
-            for y in range(wall_height):
-                tex_y = int((y / wall_height) * TEX_SIZE)
-                color = pyxel.image(0).pget(tex_x, tex_y)
-
-                pyxel.pset(ray, y_start + y, color)
+            
+            if draw_type == "wall":
+                wall_height = min(int(100 / depth), H) # le int change les profondeurs
+    
+                hit_tile_x = int(hit_x)
+                hit_tile_y = int(hit_y)
+    
+                dx = hit_x - hit_tile_x
+                dy = hit_y - hit_tile_y
+    
+                if abs(dx - 0.5) > abs(dy - 0.5):
+                    tex_x = int((hit_y % 1) * TEX_SIZE)
+                else:
+                    tex_x = int((hit_x % 1) * TEX_SIZE)
+    
+                y_start = H // 2 - wall_height // 2
+    
+                for y in range(wall_height):
+                    tex_y = int((y / wall_height) * TEX_SIZE)
+                    color = pyxel.image(0).pget(tex_x, tex_y)
+    
+                    pyxel.pset(ray, y_start + y, color)
+            # Faire en sorte que les mob sois toujours vers toi
+            if draw_type == "monster":
+                monster_height = min(int(100/depth), H)
+                
+                y_start = H // 2 - monster_height // 2 
+                
+                entitie = (ray, y_start, 16, 16, 9)
+            try:
+                pyxel.rect(entitie[0],entitie[1],entitie[2],entitie[3],entitie[4])
+            except:
+                pass
+                
 
     def draw(self):
         pyxel.cls(0)
