@@ -35,13 +35,61 @@ def wall(x, y):
     return WORLD_MAP[int(y)][int(x)] == "#"
 
 class Monster:
-    def __init__(self, x, y):
+    def __init__(self, x, y, player):
         self.x = x
         self.y = y
-    
-    # Verifie si le monstre est au cordonne approximative
-    def isThere(self,x,y):
-        return self.x+0.01 > x and self.x-0.01 < x and self.y+0.01 > y and self.y-0.01 < y
+        self.player = player
+        self.create_monster()
+
+
+    def create_monster(self):
+        img = pyxel.image(1)
+
+        # petit monstre pixel art simple
+        for y in range(16):
+            for x in range(16):
+                img.pset(x, y, 0)  # transparent
+
+        # corps
+        for y in range(4, 14):
+            for x in range(4, 12):
+                img.pset(x, y, 8)
+
+        # yeux
+        img.pset(6, 7, 7)
+        img.pset(9, 7, 7)
+
+    def update(self):
+        dx = self.player.x - self.x
+        dy = self.player.y - self.y
+        dist = math.sqrt(dx*dx + dy*dy)
+
+        if dist > 0.5:
+            self.x += (dx / dist) * 0.01
+            self.y += (dy / dist) * 0.01
+
+    def draw(self):
+        dx = self.x - self.player.x
+        dy = self.y - self.player.y
+
+        distance = math.sqrt(dx*dx + dy*dy)
+
+        angle_to_monster = math.atan2(dy, dx)
+        angle_diff = angle_to_monster - self.player.angle
+
+        while angle_diff > math.pi:
+            angle_diff -= 2 * math.pi
+        while angle_diff < -math.pi:
+            angle_diff += 2 * math.pi
+
+        if abs(angle_diff) > HALF_FOV:
+            return
+
+        screen_x = int((angle_diff + HALF_FOV) / FOV * W)
+        size = int(100 / distance)
+
+        screen_y = H // 2 - size // 2
+        pyxel.blt(screen_x - size // 2,screen_y,1,0, 0,16, 16,0,size,size)
 
 class Player:
     def __init__(self):
@@ -93,13 +141,15 @@ class App:
         pyxel.load("res.pyxres")
         
         self.player = Player()
-        monsters.append(Monster(5,9))
+        monsters.append(Monster(5,9,self.player))
 
         pyxel.run(self.update, self.draw)
 
 
     def update(self):
         self.player.update()
+        for monster in monsters:
+            monster.update()
 
 
     def draw_world(self):
@@ -109,7 +159,6 @@ class App:
         entitie = ()
         
         for ray in range(NUM_RAYS):
-            draw_type = "wall"
             ray_angle = start_angle + ray * step
             sin_a = math.sin(ray_angle)
             cos_a = math.cos(ray_angle)
@@ -121,55 +170,31 @@ class App:
                 depth += 0.02
                 x = self.player.x + cos_a * depth
                 y = self.player.y + sin_a * depth
-                found_monster = False
-                
-                for monster in monsters:
-                    if monster.isThere(x,y):
-                        found_monster = True
-                        break
-                if found_monster:
-                    hit_x, hit_y = x, y
-                    draw_type = "monster"
-                    break
                 
                 if wall(x, y):
                     hit_x, hit_y = x, y
-                    draw_type = "wall"
                     break
-            
-            if draw_type == "wall":
-                wall_height = min(int(100 / depth), H) # le int change les profondeurs
+
+            wall_height = min(int(100 / depth), H) # le int change les profondeurs
     
-                hit_tile_x = int(hit_x)
-                hit_tile_y = int(hit_y)
+            hit_tile_x = int(hit_x)
+            hit_tile_y = int(hit_y)
     
-                dx = hit_x - hit_tile_x
-                dy = hit_y - hit_tile_y
+            dx = hit_x - hit_tile_x
+            dy = hit_y - hit_tile_y
     
-                if abs(dx - 0.5) > abs(dy - 0.5):
-                    tex_x = int((hit_y % 1) * TEX_SIZE)
-                else:
-                    tex_x = int((hit_x % 1) * TEX_SIZE)
+            if abs(dx - 0.5) > abs(dy - 0.5):
+                tex_x = int((hit_y % 1) * TEX_SIZE)
+            else:
+                tex_x = int((hit_x % 1) * TEX_SIZE)
     
-                y_start = H // 2 - wall_height // 2
+            y_start = H // 2 - wall_height // 2
     
-                for y in range(wall_height):
-                    tex_y = int((y / wall_height) * TEX_SIZE)
-                    color = pyxel.image(0).pget(tex_x, tex_y)
+            for y in range(wall_height):
+                tex_y = int((y / wall_height) * TEX_SIZE)
+                color = pyxel.image(0).pget(tex_x, tex_y)
     
-                    pyxel.pset(ray, y_start + y, color)
-            # Faire en sorte que les mob sois toujours vers toi
-            if draw_type == "monster":
-                monster_height = min(int(100/depth), H)
-                
-                y_start = H // 2 - monster_height // 2 
-                
-                entitie = (ray, y_start, 16, 16, 9)
-            try:
-                pyxel.rect(entitie[0],entitie[1],entitie[2],entitie[3],entitie[4])
-            except:
-                pass
-                
+                pyxel.pset(ray, y_start + y, color)
 
     def draw(self):
         pyxel.cls(0)
@@ -179,6 +204,8 @@ class App:
         pyxel.rect(0, H//2, W, H//2, 3)
 
         self.draw_world()
+        for monster in monsters:
+            monster.draw()
 
 
 App()
