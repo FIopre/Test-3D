@@ -46,13 +46,13 @@ class Monster:
         img = pyxel.image(1)
 
         # petit monstre pixel art simple
-        for y in range(16):
-            for x in range(16):
+        for y in range(8):
+            for x in range(8):
                 img.pset(x, y, 0)  # transparent
 
         # corps
-        for y in range(4, 14):
-            for x in range(4, 12):
+        for y in range(4, 8):
+            for x in range(4, 8):
                 img.pset(x, y, 8)
 
         # yeux
