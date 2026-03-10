@@ -54,7 +54,7 @@ class Monster:
         for y in range(4, 8):
             for x in range(4, 8):
                 img.pset(x, y, 8)
-
+        #kms
         # yeux
         img.pset(6, 7, 7)
         img.pset(9, 7, 7)
