@@ -39,57 +39,43 @@ class Monster:
         self.x = x
         self.y = y
         self.player = player
-        self.create_monster()
+        self.monster_here = False
 
-
-    def create_monster(self):
-        img = pyxel.image(1)
-
-        # petit monstre pixel art simple
-        for y in range(8):
-            for x in range(8):
-                img.pset(x, y, 0)  # transparent
-
-        # corps
-        for y in range(4, 8):
-            for x in range(4, 8):
-                img.pset(x, y, 8)
-        #kms
-        # yeux
-        img.pset(6, 7, 7)
-        img.pset(9, 7, 7)
-
+    def ismonster(self,x,y):
+        return self.x-0.05 < x < self.x+0.05 and self.y-0.05 < y < self.y+0.05
+    
     def update(self):
-        dx = self.player.x - self.x
-        dy = self.player.y - self.y
-        dist = math.sqrt(dx*dx + dy*dy)
+        self.monster_here = False
 
-        if dist > 0.5:
-            self.x += (dx / dist) * 0.01
-            self.y += (dy / dist) * 0.01
+    def draw(self, ray):
+        start_angle = self.player.angle - HALF_FOV
+        step = FOV / NUM_RAYS
+        
+        ray_angle = start_angle + ray * step
+        sin_a = math.sin(ray_angle)
+        cos_a = math.cos(ray_angle)
 
-    def draw(self):
-        dx = self.x - self.player.x
-        dy = self.y - self.player.y
+        depth = 0
+        hit_x, hit_y = 0, 0
+            
+            
+        while depth < MAX_DEPTH:
+            depth += 0.02
+            x = self.player.x + cos_a * depth
+            y = self.player.y + sin_a * depth
+                
+            if self.ismonster(x,y) and self.monster_here == False:
+                hit_x, hit_y = x, y
+                self.monster_here = True
+                break
+            
+                
+        if hit_x != 0 and hit_y != 0:
+            monster_height = min(int(100 / depth), H)/10
 
-        distance = math.sqrt(dx*dx + dy*dy)
+            pyxel.blt(ray-8,50,0,16,0,16,16,0,0,monster_height)
+            
 
-        angle_to_monster = math.atan2(dy, dx)
-        angle_diff = angle_to_monster - self.player.angle
-
-        while angle_diff > math.pi:
-            angle_diff -= 2 * math.pi
-        while angle_diff < -math.pi:
-            angle_diff += 2 * math.pi
-
-        if abs(angle_diff) > HALF_FOV:
-            return
-
-        screen_x = int((angle_diff + HALF_FOV) / FOV * W)
-        size = int(100 / distance)
-
-        screen_y = H // 2 - size // 2
-        pyxel.blt(screen_x - size // 2,screen_y,1,0, 0,16, 16,0,size,size)
 
 class Player:
     def __init__(self):
@@ -156,7 +142,6 @@ class App:
 
         start_angle = self.player.angle - HALF_FOV
         step = FOV / NUM_RAYS
-        entitie = ()
         
         for ray in range(NUM_RAYS):
             ray_angle = start_angle + ray * step
@@ -195,7 +180,9 @@ class App:
                 color = pyxel.image(0).pget(tex_x, tex_y)
     
                 pyxel.pset(ray, y_start + y, color)
-
+            for monster in monsters:
+                    monster.draw(ray)
+    
     def draw(self):
         pyxel.cls(0)
 
@@ -204,8 +191,8 @@ class App:
         pyxel.rect(0, H//2, W, H//2, 3)
 
         self.draw_world()
-        for monster in monsters:
-            monster.draw()
+        
+        pyxel.pset(80,60,6)
 
 
 App()
