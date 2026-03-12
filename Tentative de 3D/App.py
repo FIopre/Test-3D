@@ -1,3 +1,4 @@
+import dis
 import pyxel
 import math
 
@@ -40,12 +41,14 @@ class Monster:
         self.y = y
         self.player = player
         self.monster_here = False
+        self.distance = 0
 
     def ismonster(self,x,y):
         return self.x-0.05 < x < self.x+0.05 and self.y-0.05 < y < self.y+0.05
     
     def update(self):
         self.monster_here = False
+        self.distance = math.sqrt((self.x-self.player.x)**2 + (self.y-self.player.y)**2)
 
     def draw(self, ray):
         start_angle = self.player.angle - HALF_FOV
@@ -68,7 +71,7 @@ class Monster:
                 hit_x, hit_y = x, y
                 self.monster_here = True
                 break
-            
+        
                 
         if hit_x != 0 and hit_y != 0:
             monster_height = min(int(100 / depth), H)/10
@@ -159,7 +162,8 @@ class App:
                 if wall(x, y):
                     hit_x, hit_y = x, y
                     break
-
+            
+            distance = math.sqrt((hit_x-self.player.x)**2 + (hit_y-self.player.y)**2)
             wall_height = min(int(100 / depth), H) # le int change les profondeurs
     
             hit_tile_x = int(hit_x)
@@ -174,14 +178,16 @@ class App:
                 tex_x = int((hit_x % 1) * TEX_SIZE)
     
             y_start = H // 2 - wall_height // 2
-    
-            for y in range(wall_height):
-                tex_y = int((y / wall_height) * TEX_SIZE)
-                color = pyxel.image(0).pget(tex_x, tex_y)
-    
-                pyxel.pset(ray, y_start + y, color)
+            
+            
             for monster in monsters:
+                if distance < monster.distance:
                     monster.draw(ray)
+                for y in range(wall_height):
+                    tex_y = int((y / wall_height) * TEX_SIZE)
+                    color = pyxel.image(0).pget(tex_x, tex_y)
+    
+                    pyxel.pset(ray, y_start + y, color)
     
     def draw(self):
         pyxel.cls(0)
