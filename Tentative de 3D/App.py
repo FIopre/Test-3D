@@ -130,7 +130,7 @@ class App:
         pyxel.load("res.pyxres")
         
         self.player = Player()
-        monsters.append(Monster(5,9,self.player))
+        monsters.append(Monster(4,8,self.player))
 
         pyxel.run(self.update, self.draw)
 
