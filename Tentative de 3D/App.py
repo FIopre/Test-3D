@@ -189,6 +189,7 @@ class App:
     
                     pyxel.pset(ray, y_start + y, color)
     
+                    #suicide toi
     def draw(self):
         pyxel.cls(0)
 
