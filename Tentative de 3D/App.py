@@ -1,4 +1,3 @@
-import dis
 import pyxel
 import math
 
@@ -16,11 +15,11 @@ TEX_SIZE = 16   # taille texture
 WORLD_MAP = [
     "##########",
     "#........#",
-    "#..##....#",
     "#........#",
-    "#....#...#",
     "#........#",
-    "#...##...#",
+    "#........#",
+    "#........#",
+    "#........#",
     "#........#",
     "#........#",
     "##########",
@@ -42,6 +41,7 @@ class Monster:
         self.player = player
         self.monster_here = False
         self.distance = 0
+        self.monster_draw = ()
 
     def ismonster(self,x,y):
         return self.x-0.05 < x < self.x+0.05 and self.y-0.05 < y < self.y+0.05
@@ -49,8 +49,22 @@ class Monster:
     def update(self):
         self.monster_here = False
         self.distance = math.sqrt((self.x-self.player.x)**2 + (self.y-self.player.y)**2)
+        if self.x < self.player.x:
+            self.x += MOVE_SPEED - 0.01
+        elif self.x > self.player.x:
+            self.x -= MOVE_SPEED - 0.01
+        if self.y < self.player.y:
+            self.y += MOVE_SPEED - 0.01
+        elif self.y > self.player.y:
+            self.y -= MOVE_SPEED - 0.01
+    def draw(self):
+        try:
+            if self.monster_draw[0] > -8 and self.monster_draw[0] < 128:
+                pyxel.blt(self.monster_draw[0],self.monster_draw[1],self.monster_draw[2],self.monster_draw[3],self.monster_draw[4],self.monster_draw[5],self.monster_draw[6],self.monster_draw[7],self.monster_draw[8],self.monster_draw[9])
+        except:
+            pass
 
-    def draw(self, ray):
+    def prepare_draw(self, ray):
         start_angle = self.player.angle - HALF_FOV
         step = FOV / NUM_RAYS
         
@@ -75,9 +89,7 @@ class Monster:
                 
         if hit_x != 0 and hit_y != 0:
             monster_height = min(int(100 / depth), H)/10
-
-            pyxel.blt(ray-8,50,0,16,0,16,16,0,0,monster_height)
-            
+            self.monster_draw = (ray-8,50,0,16,0,16,16,0,0,monster_height)
 
 
 class Player:
@@ -85,6 +97,9 @@ class Player:
         self.x = 3.5
         self.y = 3.5
         self.angle = 0
+        self.energie = 100
+        self.attack = False
+        self.over_kill = False
 
     def update(self):
         if pyxel.btn(pyxel.KEY_LEFT):
@@ -113,8 +128,26 @@ class Player:
         if pyxel.btn(pyxel.KEY_D):
             nx -= sin_a * MOVE_SPEED
             ny += cos_a * MOVE_SPEED
-
-        # collisions
+        
+        if pyxel.btn(pyxel.KEY_UP) and self.energie > 0 and self.over_kill == False:
+            self.attack = True
+        
+        if self.attack == True:
+            if self.energie <= 0:
+                self.over_kill = True
+            self.energie -= 1
+        elif self.energie < 100:
+            self.energie += 1
+        print(self.energie)
+        if self.over_kill == True and self.energie == 100:
+            self.over_kill = False
+        
+        for monster in monsters:
+            if abs(monster.x - self.x) < 0.5 and abs(monster.y - self.y) < 0.5:
+                pass #Player DIE
+        
+        self.attack = False
+        
         if not wall(nx, self.y):
             self.x = nx
         if not wall(self.x, ny):
@@ -181,13 +214,12 @@ class App:
             
             
             for monster in monsters:
-                if distance < monster.distance:
-                    monster.draw(ray)
                 for y in range(wall_height):
                     tex_y = int((y / wall_height) * TEX_SIZE)
                     color = pyxel.image(0).pget(tex_x, tex_y)
     
                     pyxel.pset(ray, y_start + y, color)
+                monster.prepare_draw(ray)
     
     def draw(self):
         pyxel.cls(0)
@@ -197,7 +229,8 @@ class App:
         pyxel.rect(0, H//2, W, H//2, 3)
 
         self.draw_world()
-        
+        for monster in monsters:
+            monster.draw()
         pyxel.pset(80,60,6)
 
 
