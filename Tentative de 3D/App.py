@@ -11,7 +11,7 @@ MOVE_SPEED = 0.05
 ROT_SPEED = 0.05
 
 TEX_SIZE = 16   # taille texture
-
+# je suis adict a wow
 WORLD_MAP = [
     "##########",
     "#........#",
