@@ -11,7 +11,7 @@ MOVE_SPEED = 0.05
 ROT_SPEED = 0.05
 
 TEX_SIZE = 16   # taille texture
-# je suis adict a wow
+
 WORLD_MAP = [
     "##########",
     "#........#",
@@ -102,6 +102,7 @@ class Player:
         self.over_kill = False
 
     def update(self):
+        self.attack = False
         if pyxel.btn(pyxel.KEY_LEFT):
             self.angle -= ROT_SPEED
         elif pyxel.btn(pyxel.KEY_RIGHT):
@@ -138,7 +139,7 @@ class Player:
             self.energie -= 1
         elif self.energie < 100:
             self.energie += 1
-        print(self.energie)
+
         if self.over_kill == True and self.energie == 100:
             self.over_kill = False
         
@@ -146,7 +147,6 @@ class Player:
             if abs(monster.x - self.x) < 0.5 and abs(monster.y - self.y) < 0.5:
                 pass #Player DIE
         
-        self.attack = False
         
         if not wall(nx, self.y):
             self.x = nx
