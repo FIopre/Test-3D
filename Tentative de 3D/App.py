@@ -145,7 +145,7 @@ class Player:
         
         for monster in monsters:
             if abs(monster.x - self.x) < 0.5 and abs(monster.y - self.y) < 0.5:
-                pass #Player DIE
+                pass #Player meurt
         
         
         if not wall(nx, self.y):
